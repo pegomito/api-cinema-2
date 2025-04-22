@@ -59,6 +59,22 @@ const update = async (corpo, id) => {
     }
   }
 
+  const create = async (corpo) => {
+    try {
+      const {
+        descricao
+      } = corpo
+  
+      const response = await Cargo.create({
+        descricao
+      });
+  
+      return response;
+    } catch (error) {
+      throw new Error(error.message)
+    }
+  }
+
   const persist = async (req, res) => {
     try {
       const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
@@ -83,21 +99,6 @@ const update = async (corpo, id) => {
     }
   }
 
-const create = async (corpo) => {
-    try {
-      const {
-        descricao
-      } = corpo
-  
-      const response = await Cargo.create({
-        descricao
-      });
-  
-      return response;
-    } catch (error) {
-      throw new Error(error.message)
-    }
-  }
 
   const destroy = async (req, res) => {
     try {

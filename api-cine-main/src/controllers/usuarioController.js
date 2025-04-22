@@ -1,5 +1,6 @@
 
 import Usuario from "../models/UsuariosModel.js";
+import Cargo from "../models/CargosModel.js";
 
 const get = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ const get = async (req, res) => {
     if (!id) {
       const response = await Usuario.findAll({
         order: [['id', 'desc']],
-        include: [{ model: Cargo, as: 'cargo' }] //relacionamento Cargo
+        include: [{ model: Cargo, as: 'cargo' }] 
       });
 
       return res.status(200).send({
@@ -24,7 +25,7 @@ const get = async (req, res) => {
 
     const response = await Usuario.findOne({
       where: { id },
-      include: [{ model: Cargo, as: 'cargo' }] // relacionamento 
+      include: [{ model: Cargo, as: 'cargo' }]
     });
 
     if (!response) {

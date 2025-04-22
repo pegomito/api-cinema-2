@@ -15,7 +15,7 @@ const Filme = sequelize.define(
       allowNull: false,
     },
     descricao: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.STRING(200),
       allowNull: false
     },
     autor: {

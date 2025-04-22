@@ -1,9 +1,9 @@
-import filmesController from "../controllers/filmesController.js";
+import filmeController from "../controllers/filmeController.js";
 
 export default (app) => {
-  app.get('/filmes', filmesController.get);
-  app.get('/filmes/:id', filmesController.get);
-  app.post('/filmes', filmesController.persist);
-  app.patch('/filmes/:id', filmesController.persist);
-  app.delete('/filmes/:id', filmesController.destroy);
+  app.get('/filme', filmeController.get);
+  app.get('/filme/:id', filmeController.get);
+  app.post('/filme', filmeController.persist);
+  app.patch('/filme/:id', filmeController.persist);
+  app.delete('/filme/:id', filmeController.destroy);
 };

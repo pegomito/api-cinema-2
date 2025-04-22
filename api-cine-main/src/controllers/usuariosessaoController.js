@@ -1,5 +1,6 @@
 import UsuarioSessao from "../models/UsuariosSessoesModel.js";
 import Usuario from "../models/UsuariosModel.js";
+import Sessao from "../models/SessoesModel.js";
 
 const get = async (req, res) => {
   try {
@@ -124,8 +125,25 @@ const destroy = async (req, res) => {
   }
 };
 
+const postcompra = async (req, res) => {
+  try {
+    const { idSessao } = req.body;
+    const sessao = await Sessao.findByPk(idSessao);
+
+    if (!sessao) {
+      return res.status(404).send('Sessão não encontrada');
+    }
+  } catch (error) {
+    console.error("Erro na criação da compra:", error);
+    return res.status(500).json({ message: "Erro interno do servidor" });
+  }
+};
+
 export default {
   get,
   persist,
-  destroy
+  destroy,
+  postcompra
 };
+
+
