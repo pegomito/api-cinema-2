@@ -6,6 +6,7 @@ import salaRoute from "./salaRoute.js";
 import sessaoRoute from "./sessaoRoute.js";
 import usuariosessaoRoute from "./usuariosessaoRoute.js";
 import parametroRoute from "./parametroRoute.js";
+import compraIngressoRoute from "./compraIngressoRoute.js";
 
 function Routes(app) {
     usuarioRoute(app);
@@ -16,6 +17,7 @@ function Routes(app) {
     sessaoRoute(app);
     usuariosessaoRoute(app);
     parametroRoute(app);
+    compraIngressoRoute(app);
 }
 
 export default Routes;
