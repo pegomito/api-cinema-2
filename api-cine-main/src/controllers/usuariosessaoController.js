@@ -236,7 +236,41 @@ const postcompra2 = async (req, res) => {
 //   "idUsuario": 123
 // }
 
-
+// {
+// 	"message": "Sessão criada com sucesso!",
+// 	"data": {
+// 		"dataInicio": "2025-04-23T21:16:28.144Z",
+// 		"dataFim": "2025-04-23T21:16:28.144Z",
+// 		"id": 13,
+// 		"lugares": {
+// 			"lugares": [
+// 				{
+// 					"linha": 1,
+// 					"lugar": 1,
+// 					"coluna": 1,
+// 					"alocado": false
+// 				},
+// 				{
+// 					"linha": 1,
+// 					"lugar": 2,
+// 					"coluna": 2,
+// 					"alocado": false
+// 				},
+// 				{
+// 					"linha": 1,
+// 					"lugar": 3,
+// 					"coluna": 3,
+// 					"alocado": false
+// 				}
+// 			]
+// 		},
+// 		"preco": 30,
+// 		"idSala": 2,
+// 		"idFilme": 1,
+// 		"updated_at": "2025-04-23T21:16:28.145Z",
+// 		"created_at": "2025-04-23T21:16:28.145Z"
+// 	}
+// }
 export default {
   get,
   persist,
