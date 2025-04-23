@@ -37,7 +37,7 @@ UsuarioSessao.belongsTo(Usuario, {
         allowNull: false,
         field: 'id_usuario'
     }
-});
+}); 
 
 UsuarioSessao.belongsTo(Sessao, {
     as: 'sessao',
@@ -50,6 +50,4 @@ UsuarioSessao.belongsTo(Sessao, {
     }
 });
 
-
-
-export  default UsuarioSessao;
+export default UsuarioSessao;

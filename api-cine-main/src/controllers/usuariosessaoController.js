@@ -184,11 +184,11 @@ const postcompra2 = async (req, res) => {
 
     const lugares = sessao.toJSON().lugares;
 
-    //if (!lugares) {
-    // return res.status(400).send({
-    //    message: "Formato errado de lugares"
-    //  });
-    //}
+    if (!lugares) {
+    return res.status(400).send({
+       message: "Formato errado de lugares"
+     });
+    }
 
     const lugarIn = lugares.lugares.findIndex(l => l.numero === lugar.numero);
 
