@@ -2,6 +2,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../configs/postgres.js";
 import Usuario from "./UsuariosModel.js";
+import Sessao from "./SessoesModel.js";
 
 const UsuarioSessao = sequelize.define(
   'usuarios_sessoes',
@@ -35,6 +36,17 @@ UsuarioSessao.belongsTo(Usuario, {
         name:'idUsuario',
         allowNull: false,
         field: 'id_usuario'
+    }
+});
+
+UsuarioSessao.belongsTo(Sessao, {
+    as: 'sessao',
+    onUpdate: 'NO ACTION',
+    onDelete: 'NO ACTION',
+    foreignKey: {
+        name:'idSessao',
+        allowNull: false,
+        field: 'id_sessao'
     }
 });
 

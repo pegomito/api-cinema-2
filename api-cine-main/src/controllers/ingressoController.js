@@ -6,21 +6,27 @@ const get = async (req, res) => {
         const sessao = await Sessao.findByPk(id);
 
         if (!sessao) {
-            return res.status(404).json({ message: "Sessão não encontrada" });
+            return res.status(404).send({ 
+                message: "sessao nao existe" 
+            });
         }
 
         const { lugares } = sessao;
-        
-        if (!Array.isArray(lugares)) {
-            return res.status(400).json({ message: "Formato de lugares inválido" });
+        //|| !Array.isArray(lugares)
+        if (!lugares ) {
+            return res.status(400).send({    
+                message: "formato errado de lugares" 
+            });
         }
-        const lugaresLivres = lugares.filter(l => l.alocado === false);
+        const lugaresLivres = lugares.lugares.filter(lugar => lugar.alocado === false);
 
-        return res.status(200).json(lugaresLivres);
+        return res.status(200).send(lugaresLivres);
 
     } catch (error) {
-        console.error("Erro ao buscar lugares livres:", error);
-        return res.status(500).json({ message: "Erro interno do servidor" });
+        console.error("erro", error);
+        return res.status(500).send({ 
+            message: error.message
+        });
     }
 };
 

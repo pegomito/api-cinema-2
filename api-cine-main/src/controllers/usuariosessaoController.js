@@ -125,25 +125,124 @@ const destroy = async (req, res) => {
   }
 };
 
-const postcompra = async (req, res) => {
+const postcompra1 = async (req, res) => {
   try {
     const { idSessao } = req.body;
+    const { lugar } = req.body;
+    const { lugares } = sessao.lugares
+    const sessao = await Sessao.findByPk(idSessao);
+
+    if (!sessao) {
+      return res.status(404).send('sessão não encontrada');
+    }
+    const lugaresAlocados = lugares.lugares.alocado = true;
+
+    if (lugaresAlocados.includes(lugar)) {
+      return res.status(400).send('lugar ocupado po');
+    }
+
+    if (!lugaresAlocados.includes(lugar)) {
+      await UsuarioSessao.findOne({
+        where: { idUsuario: req.usuario.id, idSessao }
+      });
+
+    }
+
+
+    /*  if (usuarioSessao) {
+        return res.status(400).send('usuario já possui um ingresso para esta sessão');
+      }*/
+
+
+  } catch (error) {
+    error.message
+    //= 'erro da compra';
+
+    return res.status(500).send({
+      error: error.message
+    });
+  }
+};
+
+const postcompra2 = async (req, res) => {
+  try {
+    const { idSessao, lugar, idUsuario } = req.body;
+
+    if (!idSessao) {
+      return res.status(400).send('Informe um ID de sessão válido');
+    }
+
+    if (!idUsuario) {
+      return res.status(400).send('Informe um ID de usuário válido');
+    }
+
     const sessao = await Sessao.findByPk(idSessao);
 
     if (!sessao) {
       return res.status(404).send('Sessão não encontrada');
     }
+
+    const lugares = sessao.toJSON().lugares;
+
+    //if (!lugares) {
+    // return res.status(400).send({
+    //    message: "Formato errado de lugares"
+    //  });
+    //}
+
+    const lugarIn = lugares.lugares.findIndex(l => l.numero === lugar.numero);
+
+    if (lugarIn === -1) {
+      return res.status(404).send('Lugar não existe');
+    }
+
+    if (lugares[lugarIn].alocado) {
+      return res.status(400).send('Lugar ocupado');
+    }
+
+    lugares[lugarIn].idUsuario = idUsuario;
+    lugares[lugarIn].alocado = true;
+
+    const usuarioSessao = await UsuarioSessao.create({
+      idUsuario,
+      idSessao,
+      lugar: lugar.numero 
+    });
+    
+    sessao.lugares = lugares;
+    await sessao.save();
+
+    return res.status(200).send({
+      message: 'Lugar reservado com sucesso',
+      lugar: lugares[lugarIn],
+      usuarioSessao
+    });
   } catch (error) {
-    console.error("Erro na criação da compra:", error);
-    return res.status(500).json({ message: "Erro interno do servidor" });
+    error.message = 'erro na reserva do lugar';
+
+    return res.status(500).send({
+      message: 'erro no processamento',
+    });
   }
 };
+
+
+//body do JSON
+// {
+//   "idSessao": 1,
+//   "lugar": {
+//     "numero": 5
+//   },
+//   "idUsuario": 123
+// }
+
 
 export default {
   get,
   persist,
   destroy,
-  postcompra
+  postcompra2,
+  postcompra1
 };
 
 

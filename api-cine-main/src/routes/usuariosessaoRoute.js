@@ -6,5 +6,4 @@ export default (app) => {
   app.post('/usuarios-sessoes', usuariosessaoController.persist);
   app.patch('/usuarios-sessoes/:id', usuariosessaoController.persist);
   app.delete('/usuarios-sessoes/:id', usuariosessaoController.destroy);
-  app.post('/usuarios-sessoes/usuario/:id', usuariosessaoController.postcompra);
 };
