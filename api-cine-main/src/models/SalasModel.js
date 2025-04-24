@@ -36,4 +36,4 @@ Sala.belongsTo(PadraoLugar, {
 
 
 
-export  default Sala;
+export default Sala;

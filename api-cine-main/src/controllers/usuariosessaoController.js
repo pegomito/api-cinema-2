@@ -1,6 +1,9 @@
 import UsuarioSessao from "../models/UsuariosSessoesModel.js";
 import Usuario from "../models/UsuariosModel.js";
 import Sessao from "../models/SessoesModel.js";
+import { Op } from "sequelize";
+import moment from "moment-timezone";
+import { sequelize } from "../configs/postgres.js";
 
 const get = async (req, res) => {
   try {
@@ -59,11 +62,12 @@ const update = async (corpo, id) => {
 
 const create = async (corpo) => {
   try {
-    const { valorAtual, idUsuario } = corpo;
+    const { valorAtual, idUsuario, idSessao } = corpo;
 
     const response = await UsuarioSessao.create({
       valorAtual,
-      idUsuario
+      idUsuario,
+      idSessao
     });
 
     return response;
@@ -125,158 +129,137 @@ const destroy = async (req, res) => {
   }
 };
 
-const postcompra1 = async (req, res) => {
-  try {
-    const { idSessao } = req.body;
-    const { lugar } = req.body;
-    const { lugares } = sessao.lugares
-    const sessao = await Sessao.findByPk(idSessao);
+class AlternativoController {
 
-    if (!sessao) {
-      return res.status(404).send('sessão não encontrada');
-    }
-    const lugaresAlocados = lugares.lugares.alocado = true;
+  static formatDate(date) {
+    return moment(date).format("DD/MM/YYYY HH:mm");
+  }
 
-    if (lugaresAlocados.includes(lugar)) {
-      return res.status(400).send('lugar ocupado po');
-    }
+  static async comprarSessao(req, res) {
+    try {
+      const { lugar } = req.params;
+      
+      if (!lugar) {
+        return res.status(400).send({ error: "Lugar não informado" });
+      } 
+      const dados = req.body; 
 
-    if (!lugaresAlocados.includes(lugar)) {
-      await UsuarioSessao.findOne({
-        where: { idUsuario: req.usuario.id, idSessao }
+      if (!dados.idSessao || !dados.idUsuario ) {
+        return res.status(400).send({ error: "Informações inválidas" });
+      }
+
+      const usuario = await Usuario.findByPk(dados.idUsuario);
+      if (!usuario) {
+        return res.status(400).send({
+          error: `Nenhum usuário encontrado com o id ${dados.idUsuario}`,
+        });
+      }
+
+      usuario.idCargo = await usuario.getCargo();
+      
+      if (usuario.idCargo?.descricao === "atendente") {
+        return res.status(400).send({
+          error: "Atendentes não podem comprar ingressos",
+        });
+      }
+
+      const sessaoBanco = await Sessao.findOne({
+        where: {
+          id: dados.idSessao,
+          dataInicio: {
+            [Op.gt]: new Date(Date.now()),
+          },
+        },
       });
 
-    }
+      if (!sessaoBanco) {
+        return res.status(400).send({
+          error: `Nenhuma sessão válida encontrada com o id ${dados.idSessao}`,
+        });
+      }
 
+      const sessao = sessaoBanco.toJSON();
 
-    /*  if (usuarioSessao) {
-        return res.status(400).send('usuario já possui um ingresso para esta sessão');
-      }*/
+      const dataInicio = moment.tz(sessao.dataInicio, "utc").format();
+      const dataFim = moment.tz(sessao.dataFim, "utc").format();
 
+      const sessoesConflito = await sequelize
+        .query(
+          `
+        SELECT
+          s.*
+        FROM sessoes AS s
+        JOIN usuarios_sessoes AS us ON (s.id = us.id_sessao)
+        WHERE us.id_usuario = ${usuario.id} 
+          AND (('${dataInicio}' BETWEEN s.data_inicio AND s.data_fim) 
+          OR ('${dataFim}' BETWEEN s.data_inicio AND s.data_fim) 
+          OR ('${dataInicio}' < s.data_inicio AND '${dataFim}' > s.data_fim));
+      `
+        )
+        .then((a) => a[0]);
 
-  } catch (error) {
-    error.message
-    //= 'erro da compra';
+      if (sessoesConflito.find((a) => a.id === sessao.id)) {
+        return res.status(400).send({
+          error: "Usuário já comprou ingresso para essa sessão!",
+        });
+      }
 
-    return res.status(500).send({
-      error: error.message
-    });
-  }
-};
+      if (sessoesConflito.length) {
+        return res.status(400).send({
+          error: "Usuário já comprou ingresso para outra(s) sessões neste horário!",
+        });
+      }
 
-const postcompra2 = async (req, res) => {
-  try {
-    const { idSessao, lugar, idUsuario } = req.body;
-
-    if (!idSessao) {
-      return res.status(400).send('Informe um ID de sessão válido');
-    }
-
-    if (!idUsuario) {
-      return res.status(400).send('Informe um ID de usuário válido');
-    }
-
-    const sessao = await Sessao.findByPk(idSessao);
-
-    if (!sessao) {
-      return res.status(404).send('Sessão não encontrada');
-    }
-
-    const lugares = sessao.toJSON().lugares;
-
-    if (!lugares) {
-    return res.status(400).send({
-       message: "Formato errado de lugares"
-     });
-    }
-
-    const lugarIn = lugares.lugares.findIndex(l => l.numero === lugar.numero);
-
-    if (lugarIn === -1) {
-      return res.status(404).send('Lugar não existe');
-    }
-
-    if (lugares[lugarIn].alocado) {
-      return res.status(400).send('Lugar ocupado');
-    }
-
-    lugares[lugarIn].idUsuario = idUsuario;
-    lugares[lugarIn].alocado = true;
-
-    const usuarioSessao = await UsuarioSessao.create({
-      idUsuario,
-      idSessao,
-      lugar: lugar.numero 
-    });
+    console.log(sessao);
     
-    sessao.lugares = lugares;
-    await sessao.save();
+      const indexLugar = sessao.lugares.findIndex(
+        (a) => a.lugar === Number(lugar)
+      );
 
-    return res.status(200).send({
-      message: 'Lugar reservado com sucesso',
-      lugar: lugares[lugarIn],
-      usuarioSessao
-    });
-  } catch (error) {
-    error.message = 'erro na reserva do lugar';
+      if (indexLugar === -1) {
+        return res.status(400).send({ error: "Lugar não encontrado na sessão!" });
+      }
 
-    return res.status(500).send({
-      message: 'erro no processamento',
-    });
+      if (sessao.lugares[indexLugar].alocado) {
+        return res.status(400).send({
+          error: "Lugar escolhido já se encontra vendido!",
+        });
+      }
+
+      sessao.lugares[indexLugar].alocado = true;
+      sessao.lugares[indexLugar].idUsuario = usuario.id;
+      sessaoBanco.lugares = sessao.lugares;
+
+      await sessaoBanco.save();
+
+      sessaoBanco.idFilme = await sessaoBanco.getFilme();
+
+      const responseFim = {
+        Filme: sessaoBanco.idFilme.nome,
+        Sessão: AlternativoController.formatDate(sessao.dataInicio), 
+        Valor: Number(sessao.preco),
+      };
+
+      await create({
+        idUsuario: usuario.id,
+        idSessao: sessaoBanco.id,
+        valorAtual: sessaoBanco.preco,
+      });
+
+      return res.status(201).send(responseFim);
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ error: "Erro interno no servidor" });
+    }
   }
-};
+}
 
-
-//body do JSON
-// {
-//   "idSessao": 1,
-//   "lugar": {
-//     "numero": 5
-//   },
-//   "idUsuario": 123
-// }
-
-// {
-// 	"message": "Sessão criada com sucesso!",
-// 	"data": {
-// 		"dataInicio": "2025-04-23T21:16:28.144Z",
-// 		"dataFim": "2025-04-23T21:16:28.144Z",
-// 		"id": 13,
-// 		"lugares": {
-// 			"lugares": [
-// 				{
-// 					"linha": 1,
-// 					"lugar": 1,
-// 					"coluna": 1,
-// 					"alocado": false
-// 				},
-// 				{
-// 					"linha": 1,
-// 					"lugar": 2,
-// 					"coluna": 2,
-// 					"alocado": false
-// 				},
-// 				{
-// 					"linha": 1,
-// 					"lugar": 3,
-// 					"coluna": 3,
-// 					"alocado": false
-// 				}
-// 			]
-// 		},
-// 		"preco": 30,
-// 		"idSala": 2,
-// 		"idFilme": 1,
-// 		"updated_at": "2025-04-23T21:16:28.145Z",
-// 		"created_at": "2025-04-23T21:16:28.145Z"
-// 	}
-// }
 export default {
   get,
   persist,
   destroy,
-  postcompra2,
-  postcompra1
+  comprarSessao: AlternativoController.comprarSessao,
 };
 
 

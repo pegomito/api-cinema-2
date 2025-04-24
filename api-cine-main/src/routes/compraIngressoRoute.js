@@ -3,5 +3,5 @@ import usuariosessaoController from "../controllers/usuariosessaoController.js";
 
 export default (app) => {
   app.get("/sessoes/lugares-livres/:id", ingressoController.get);
-  app.post("/sessoes/usuario-sessao", usuariosessaoController.postcompra2);
+  app.post("/sessoes/comprar/:lugar", usuariosessaoController.comprarSessao);
 };

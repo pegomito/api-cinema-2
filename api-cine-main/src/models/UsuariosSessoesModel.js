@@ -18,7 +18,6 @@ const UsuarioSessao = sequelize.define(
       allowNull: false
     },
     
-
   },
   {
     freezeTableName: true,

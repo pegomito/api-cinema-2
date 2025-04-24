@@ -10,7 +10,7 @@ const get = async (req, res) => {
                 message: "sessao nao existe" 
             });
         }
-
+        
         const { lugares } = sessao;
         //|| !Array.isArray(lugares)
         if (!lugares ) {
