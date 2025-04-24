@@ -253,6 +253,71 @@ class AlternativoController {
       return res.status(500).send({ error: "Erro interno no servidor" });
     }
   }
+
+  static async cancelarSessao(req, res) {
+    try {
+      const { lugar } = req.params;
+      const dados = req.body; 
+
+      if (!lugar) {
+        return res.status(400).send({ error: "Lugar não informado" });
+      } 
+
+      if (!dados.idSessao || !dados.idUsuario ) {
+        return res.status(400).send({ error: "Informações inválidas" });
+      }
+
+      const usuario = await Usuario.findByPk(dados.idUsuario);
+      if (!usuario) {
+        return res.status(400).send({
+          error: `Nenhum usuário encontrado com o id ${dados.idUsuario}`,
+        });
+      }
+
+      const sessaoBanco = await Sessao.findOne({
+        where: {
+          id: dados.idSessao,
+          dataInicio: {
+            [Op.gt]: new Date(Date.now()),
+          },
+        },
+      });
+
+      if (!sessaoBanco) {
+        return res.status(400).send({
+          error: `Nenhuma sessão válida encontrada com o id ${dados.idSessao}`,
+        });
+      }
+
+      const sessao = sessaoBanco.toJSON();
+
+      const indexLugar = sessao.lugares.findIndex(
+        (a) => a.lugar === Number(lugar)
+      );
+
+      if (indexLugar === -1) {
+        return res.status(400).send({ error: "Lugar não encontrado na sessão!" });
+      }
+
+      if (!sessao.lugares[indexLugar].alocado) {
+        return res.status(400).send({
+          error: "Lugar escolhido não está vendido!",
+        });
+      }
+
+      sessao.lugares[indexLugar].alocado = false;
+      sessao.lugares[indexLugar].idUsuario = null;
+      sessaoBanco.lugares = sessao.lugares;
+
+      await sessaoBanco.save();
+
+      return res.status(200).send({ message: "Ingresso cancelado com sucesso!" });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ error: "Erro interno no servidor" });
+    }
+  }
 }
 
 export default {
@@ -260,6 +325,7 @@ export default {
   persist,
   destroy,
   comprarSessao: AlternativoController.comprarSessao,
+  cancelarSessao: AlternativoController.cancelarSessao
 };
 
 

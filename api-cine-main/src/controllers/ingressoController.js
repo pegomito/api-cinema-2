@@ -10,7 +10,7 @@ const get = async (req, res) => {
                 message: "sessao nao existe" 
             });
         }
-        
+
         const { lugares } = sessao;
         //|| !Array.isArray(lugares)
         if (!lugares ) {
@@ -18,7 +18,7 @@ const get = async (req, res) => {
                 message: "formato errado de lugares" 
             });
         }
-        const lugaresLivres = lugares.lugares.filter(lugar => lugar.alocado === false);
+        const lugaresLivres = lugares.filter(lugar => lugar.alocado === false);
 
         return res.status(200).send(lugaresLivres);
 
