@@ -18,6 +18,11 @@ const Usuario = sequelize.define(
     },
     email: {
       type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true,
+    },
+    passwordHash: {
+      type: DataTypes.TEXT(100),
       allowNull: false
     },
     estudante: {
@@ -45,7 +50,7 @@ Usuario.belongsTo(Cargo, {
     onDelete: 'NO ACTION',
     foreignKey: {
         name:'idCargo',
-        allowNull: true,
+        allowNull: false,
         field: 'id_cargo'
     }
 });
