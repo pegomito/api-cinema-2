@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import Routes from './routes/index.js';
 import { sequelize } from './configs/postgres.js';
 import './models/index.js'
+import fileUpload from 'express-fileupload';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -27,11 +28,19 @@ const corsOptions = {
 }
 
 
-
 app.use (morgan('combined', {stream: logStream}));
 app.use(cors(corsOptions));
 app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({extended: true, limit: '50mb'} ));
+app.use(fileUpload({
+    createParentPath: true,
+    safeFileNames: true,
+    preserveExtension: true,
+    uriDecodeFileNames: true,
+    debug: true,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50mb
+}));
+app.use(express.static('public'));
 
 Routes(app)
 app.use((req, res) => {

@@ -1,9 +1,10 @@
-
 import Usuario from "../models/UsuariosModel.js";
 import Cargo from "../models/CargosModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
+import Troca from "../models/TrocarSenhasModel.js";
+import sendMail from "../utils/email.js";
+import { Op } from "sequelize";
 
 const getDataByToken = async (req, res) => {
   try {
@@ -157,6 +158,122 @@ const update = async (corpo, id) => {
     }
   }
 
+  const trocarSenha = async (req, res) => {
+    const { code, newPassword } = req.body;
+  
+    if (!code || !newPassword) {
+      return res.status(400).send({ message: "Código e nova senha são obrigatórios" });
+    }
+  
+    try {
+      const tokenData = await Troca.findOne({
+        where: { codigo_temp: code },
+        include: [{ model: Usuario, as: 'usuario' }] // Inclui os dados do usuário
+      });
+  
+      if (!tokenData) {
+        return res.status(400).send({ message: "Código inválido" });
+      }
+  
+      console.log(tokenData.usuario); // Acessa os dados do usuário associado
+  
+      if (new Date() > tokenData.codigo_temp_exp) {
+        return res.status(400).send({ message: "Código expirado" });
+      }
+  
+      const user = tokenData.usuario; // Acessa o usuário associado
+  
+      if (!user) {
+        return res.status(404).send({ message: "Usuário não encontrado" });
+      }
+  
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.passwordHash = hashedPassword;
+  
+      await user.save();
+      await tokenData.destroy();
+  
+      await sendMail({
+        to: user.email,
+        subject: "Senha alterada com sucesso",
+        text: "Sua senha foi alterada com sucesso. Se você não realizou essa alteração, entre em contato conosco imediatamente."
+      });
+  
+      return res.status(200).send({ message: "Senha alterada com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "Erro ao redefinir senha" });
+    }
+  };
+
+const gerarTokenTrocaSenha = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await Usuario.findOne({
+       where: { email } 
+      });
+
+    if (!user) {
+      return res.status(404).send({
+         message: "Usuário não encontrado"
+         });
+    }
+
+    const existingToken = await Troca.findOne({
+      where: { email, codigo_temp_exp: { [Op.gt]: new Date() } },
+    });
+
+    if (existingToken) {
+      return res.status(400).send({
+         message: "Já existe um token ativo para este e-mail"
+         });
+    }
+    
+    const token = jwt.sign(
+      { email: user.email },
+      process.env.TOKEN_KEY,
+      { expiresIn: "30m" }
+    );
+
+    await Troca.create({
+      codigo_temp: token,
+      codigo_temp_exp: new Date(Date.now() + 30 * 60 * 1000), // Expira em 30 minutos
+      email: user.email,
+      idUsuario: user.id // Relaciona com o usuário
+    });
+
+    await sendMail({
+      to: user.email,
+      subject: "Redefinição de Senha",
+      text: `Seu código para redefinição de senha é: ${token}. Ele expira em 30 minutos.`,
+    });
+
+    return res.status(200).send({ message: "Código enviado para o e-mail" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: "Erro ao gerar código de troca de senha" });
+  }
+};
+
+const user = await Usuario.findOne({ where: { email: "usuario@email.com" } });
+
+if (user) {
+  await Troca.create({
+    codigo_temp: "ABC123",
+    codigo_temp_exp: new Date(Date.now() + 30 * 60 * 1000),
+    email: user.email,
+    idUsuario: user.id
+  });
+}
+
+// const tokenData = await Troca.findOne({
+//   where: { codigo_temp: "ABC123" },
+//   include: [{ model: Usuario, as: 'usuario' }]
+// });
+
+ //console.log(tokenData.usuario); Exibe os dados do usuário associado
+
   const persist = async (req, res) => {
     try {
       const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
@@ -221,6 +338,33 @@ const create = async (corpo, res) => {
     }
   }
 
+  const postSenhaTemp= async (req, res) => {
+    const { email, password, codigoTemp, codigoTempExp, idUsuario } = req.body;
+  
+    try {
+      
+      if (!email || !password || !idUsuario) {
+        return res.status(400).send({ message: "Campos obrigatórios: email, password, idUsuario" });
+      }
+
+      const troca = await Troca.create({
+        email,
+        password,
+        codigoTemp: codigoTemp || null, 
+        codigoTempExp: codigoTempExp || new Date(Date.now() + 30 * 60 * 1000), // Expira em 30 minutos, se não fornecido
+        idUsuario,
+      });
+  
+      return res.status(201).send({
+        message: "Registro criado com sucesso na tabela Troca",
+        data: troca,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "Erro ao criar registro na tabela Troca", error: error.message });
+    }
+  };
+
   const destroy = async (req, res) => {
     try {
       const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
@@ -251,10 +395,18 @@ const create = async (corpo, res) => {
     }
   }
 
+(async () => {
+  await Usuario.sync(); // Sincroniza a tabela de usuários
+  await Troca.sync(); // Sincroniza a tabela de troca de senhas
+})();
+
   export default {
     get,
     persist,
     destroy,
     login,
-    getDataByToken
+    getDataByToken,
+    trocarSenha,
+    gerarTokenTrocaSenha,
+    postSenhaTemp
   }

@@ -1,5 +1,6 @@
 
 import Cargo from "../models/CargosModel.js";
+import uploadFile from "../utils/uploadFile.js";
 
 const get = async (req, res) => {
   try {
@@ -75,6 +76,14 @@ const create = async (corpo) => {
   }
 }
 
+const createImg = async (dados, res) => {
+  await uploadFile(dados.files.arquivo, {id: 1, tipo: 'imagem', tabela: 'cargo'});
+  return res.status(200).send({
+    message: 'Imagem criada com sucesso',
+    data: dados.files.arquivo
+  });
+}
+
 const persist = async (req, res) => {
   try {
     const id = req.params.id ? req.params.id.toString().replace(/\D/g, '') : null;
@@ -133,5 +142,6 @@ const destroy = async (req, res) => {
 export default {
   get,
   persist,
-  destroy
+  destroy,
+  createImg
 }

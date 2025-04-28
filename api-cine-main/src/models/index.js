@@ -1,11 +1,12 @@
-import Cargo from './CargosModel.js';
-import Filme from './FilmesModel.js';
-import PadraoLugares from './PadraoLugaresModel.js';
-import Sala from './SalasModel.js';
-import Sessao from './SessoesModel.js';
-import Usuario from './UsuariosModel.js';
-import UsuarioSessao from './UsuariosSessoesModel.js';
-import Parametro from './ParametrosModel.js';
+// import Cargo from './CargosModel.js';
+// import Filme from './FilmesModel.js';
+// import PadraoLugares from './PadraoLugaresModel.js';
+// import Sala from './SalasModel.js';
+// import Sessao from './SessoesModel.js';
+// import Usuario from './UsuariosModel.js';
+// import UsuarioSessao from './UsuariosSessoesModel.js';
+// import Parametro from './ParametrosModel.js';
+// import Troca from "./TrocarSenhasModel.js";
 
 (async () => {
 // await Filme.sync({ force: true });
@@ -16,4 +17,5 @@ import Parametro from './ParametrosModel.js';
 // await Sessao.sync({ force: true });
 // await UsuarioSessao.sync({ force: true });
 // await Parametro.sync({ force: true });  
+// await Troca.sync({ force: true });
   })();
