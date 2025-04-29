@@ -3,14 +3,19 @@ import { sequelize } from '../configs/postgres.js';
 import Usuario from './UsuariosModel.js';
 
 const Troca = sequelize.define('troca', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true
+        unique: false
     },
     password: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     codigoTemp: {
         field: 'codigo_temp',

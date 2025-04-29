@@ -162,26 +162,17 @@ const update = async (corpo, id) => {
     const { code, newPassword } = req.body;
   
     if (!code || !newPassword) {
-      return res.status(400).send({ message: "Código e nova senha são obrigatórios" });
+      return res.status(400).send({ message: "código e nova senha são obrigatórios" });
     }
   
     try {
-      const tokenData = await Troca.findOne({
-        where: { codigo_temp: code },
-        include: [{ model: Usuario, as: 'usuario' }] // Inclui os dados do usuário
-      });
+      const decoded = jwt.verify(code, process.env.TOKEN_KEY);
   
-      if (!tokenData) {
-        return res.status(400).send({ message: "Código inválido" });
+      if (!decoded || !decoded.email) {
+        return res.status(400).send({ message: "código inválido" });
       }
   
-      console.log(tokenData.usuario); // Acessa os dados do usuário associado
-  
-      if (new Date() > tokenData.codigo_temp_exp) {
-        return res.status(400).send({ message: "Código expirado" });
-      }
-  
-      const user = tokenData.usuario; // Acessa o usuário associado
+      const user = await Usuario.findOne({ where: { email: decoded.email } });
   
       if (!user) {
         return res.status(404).send({ message: "Usuário não encontrado" });
@@ -191,16 +182,28 @@ const update = async (corpo, id) => {
       user.passwordHash = hashedPassword;
   
       await user.save();
-      await tokenData.destroy();
+
+      if (!user.email) {
+        return res.status(400).send({ message: "E-mail do usuário não encontrado" });
+      }
   
-      await sendMail({
-        to: user.email,
-        subject: "Senha alterada com sucesso",
-        text: "Sua senha foi alterada com sucesso. Se você não realizou essa alteração, entre em contato conosco imediatamente."
-      });
+      console.log("E-mail do usuário:", user.email); 
+  
+      await sendMail(
+        user.email, 
+        user.nome || "Usuário", 
+        "Sua senha foi alterada com sucesso. Se você não realizou essa alteração, entre em contato conosco imediatamente.", // Corpo do e-mail
+        "Senha alterada com sucesso" 
+      );
   
       return res.status(200).send({ message: "Senha alterada com sucesso!" });
     } catch (error) {
+      if (error.name === "TokenExpiredError") {
+        return res.status(400).send({ message: "código expirado" });
+      }
+      if (error.name === "JsonWebTokenError") {
+        return res.status(400).send({ message: "código inválido" });
+      }
       console.error(error);
       return res.status(500).send({ message: "Erro ao redefinir senha" });
     }
@@ -238,15 +241,16 @@ const gerarTokenTrocaSenha = async (req, res) => {
 
     await Troca.create({
       codigo_temp: token,
-      codigo_temp_exp: new Date(Date.now() + 30 * 60 * 1000), // Expira em 30 minutos
+      codigo_temp_exp: new Date(Date.now() + 30 * 60 * 1000), 
       email: user.email,
-      idUsuario: user.id // Relaciona com o usuário
+      idUsuario: user.id 
     });
 
     await sendMail({
       to: user.email,
+      name: user.nome,
       subject: "Redefinição de Senha",
-      text: `Seu código para redefinição de senha é: ${token}. Ele expira em 30 minutos.`,
+      text: `Seu código para redefinição de senha é: ${token}. expira em 30 minutos.`,
     });
 
     return res.status(200).send({ message: "Código enviado para o e-mail" });
@@ -266,13 +270,25 @@ if (user) {
     idUsuario: user.id
   });
 }
+const verificarSenha = async (req, res) => {
+  const { email } = req.body;
 
-// const tokenData = await Troca.findOne({
-//   where: { codigo_temp: "ABC123" },
-//   include: [{ model: Usuario, as: 'usuario' }]
-// });
+  try {
+    const user = await Usuario.findOne({ where: { email } });
 
- //console.log(tokenData.usuario); Exibe os dados do usuário associado
+    if (!user) {
+      return res.status(404).send({ message: "Usuário não encontrado" });
+    }
+
+    return res.status(200).send({
+      message: "Usuário encontrado",
+      passwordHash: user.passwordHash,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: "Erro ao buscar usuário" });
+  }
+};
 
   const persist = async (req, res) => {
     try {
@@ -313,7 +329,7 @@ const create = async (corpo, res) => {
       const verficarEmail = await Usuario.findOne({
         where: {
           email
-        }
+        } 
       });
 
       if (verficarEmail) {  
@@ -351,17 +367,17 @@ const create = async (corpo, res) => {
         email,
         password,
         codigoTemp: codigoTemp || null, 
-        codigoTempExp: codigoTempExp || new Date(Date.now() + 30 * 60 * 1000), // Expira em 30 minutos, se não fornecido
+        codigoTempExp: codigoTempExp || new Date(Date.now() + 30 * 60 * 1000), 
         idUsuario,
       });
   
       return res.status(201).send({
-        message: "Registro criado com sucesso na tabela Troca",
+        message: "Registro criado ",
         data: troca,
       });
     } catch (error) {
       console.error(error);
-      return res.status(500).send({ message: "Erro ao criar registro na tabela Troca", error: error.message });
+      return res.status(500).send({ message: "Erro ao criar registro n", error: error.message });
     }
   };
 
@@ -396,8 +412,8 @@ const create = async (corpo, res) => {
   }
 
 (async () => {
-  await Usuario.sync(); // Sincroniza a tabela de usuários
-  await Troca.sync(); // Sincroniza a tabela de troca de senhas
+  await Usuario.sync(); 
+  await Troca.sync();
 })();
 
   export default {
@@ -408,5 +424,6 @@ const create = async (corpo, res) => {
     getDataByToken,
     trocarSenha,
     gerarTokenTrocaSenha,
-    postSenhaTemp
+    postSenhaTemp,
+    verificarSenha
   }
