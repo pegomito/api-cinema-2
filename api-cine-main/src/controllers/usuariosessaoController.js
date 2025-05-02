@@ -157,7 +157,7 @@ class AlternativoController {
 
       usuario.idCargo = await usuario.getCargo();
       
-      if (usuario.idCargo?.descricao === "atendente") {
+      if (usuario.idCargo.descricao === "atendente") {
         return res.status(400).send({
           error: "Atendentes não podem comprar ingressos",
         });

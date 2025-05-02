@@ -4,7 +4,7 @@ import Usuario  from "../models/UsuariosModel.js";
 export default async (req, res, next) => {
   try {
     
-    const userId = req.user?.id; 
+    const userId = req.user.id; 
     if (!userId) {
       return res.status(401).send({
         message: "usuário não autenticado",

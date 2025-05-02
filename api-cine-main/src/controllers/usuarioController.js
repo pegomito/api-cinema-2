@@ -249,27 +249,17 @@ const gerarTokenTrocaSenha = async (req, res) => {
     await sendMail({
       to: user.email,
       name: user.nome,
-      subject: "Redefinição de Senha",
-      text: `Seu código para redefinição de senha é: ${token}. expira em 30 minutos.`,
+      subject: "redefinição de Senha",
+      text: `seu código para redefinição de senha é: ${token}. expira em 30 minutos.`,
     });
 
-    return res.status(200).send({ message: "Código enviado para o e-mail" });
+    return res.status(200).send({ message: "código enviado para o e-mail" });
   } catch (error) {
     console.error(error);
-    return res.status(500).send({ message: "Erro ao gerar código de troca de senha" });
+    return res.status(500).send({ message: "erro ao gerar código de troca de senha" });
   }
 };
 
-const user = await Usuario.findOne({ where: { email: "usuario@email.com" } });
-
-if (user) {
-  await Troca.create({
-    codigo_temp: "ABC123",
-    codigo_temp_exp: new Date(Date.now() + 30 * 60 * 1000),
-    email: user.email,
-    idUsuario: user.id
-  });
-}
 const verificarSenha = async (req, res) => {
   const { email } = req.body;
 
