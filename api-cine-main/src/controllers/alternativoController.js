@@ -3,7 +3,7 @@
 // import { Op } from "sequelize";
 // import moment from "moment-timezone";
 // import { sequelize } from "../configs/postgres.js";
-import usuariosessaoController from "./usuariosessaoController.js";
+// import usuariosessaoController from "./usuariosessaoController.js";
 
 // class AlternativoController {
 
