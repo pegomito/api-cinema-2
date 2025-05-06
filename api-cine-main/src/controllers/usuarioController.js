@@ -260,6 +260,17 @@ const gerarTokenTrocaSenha = async (req, res) => {
   }
 };
 
+const user = await Usuario.findOne({ where: { email: "usuario@email.com" } });
+
+if (user) {
+  await Troca.create({
+    codigo_temp: "ABC123",
+    codigo_temp_exp: new Date(Date.now() + 30 * 60 * 1000),
+    email: user.email,
+    idUsuario: user.id
+  });
+}
+
 const verificarSenha = async (req, res) => {
   const { email } = req.body;
 
