@@ -17,7 +17,7 @@ function Routes(app) {
     sessaoRoute(app);
     usuariosessaoRoute(app);
     parametroRoute(app);
-    compraIngressoRoute(app);
+    compraIngressoRoute(app);   
 }
 
 export default Routes;

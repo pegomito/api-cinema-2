@@ -102,7 +102,7 @@ const persist = async (req, res) => {
 
     if (!id) {
       
-      const response = await create(req.body, req.files ? req.files.imagem : null);
+      const response = await create(req.body, req.files ? req.files.imagemCartaz : null);
       return res.status(201).send({
         message: "Filme criado com sucesso!",
         data: response,

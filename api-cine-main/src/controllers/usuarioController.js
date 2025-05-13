@@ -323,7 +323,7 @@ const create = async (corpo, res) => {
         cpf,
         email,
         estudante,
-        password,
+        password, 
         idCargo
       } = corpo;
 
